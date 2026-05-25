@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>병합 정렬 코드 완전 해설</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0D1117;--surf:#161B22;--surf2:#1C2330;--brd:#30363D;
+  --pur:#7C3AED;--pur-l:#A78BFA;--pur-bg:rgba(124,58,237,.18);
+  --teal:#0D9488;--teal-l:#5EEAD4;
+  --amb:#D97706;--amb-l:#FCD34D;
+  --red:#DC2626;--red-l:#FCA5A5;
+  --grn:#16A34A;--grn-l:#86EFAC;
+  --blu:#1D4ED8;--blu-l:#93C5FD;
+  --txt:#E6EDF3;--txt-m:#8B949E;--txt-d:#484F58;
+  --code:'JetBrains Mono',monospace;
+  --body:'Noto Sans KR',sans-serif;
+}
+body{background:var(--bg);color:var(--txt);font-family:var(--body);overflow-x:hidden}
+
+/* ── 헤더 ── */
+.hero{padding:2rem 1.5rem 1.5rem;text-align:center;border-bottom:1px solid var(--brd)}
+.hero-chip{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--pur-l);background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.3);border-radius:20px;padding:3px 12px;margin-bottom:.75rem}
+.hero h1{font-size:1.6rem;font-weight:700;margin-bottom:.35rem}
+.hero p{font-size:.83rem;color:var(--txt-m);max-width:480px;margin:0 auto}
+
+/* ── 네비게이션 바 ── */
+.nav-bar{position:sticky;top:0;z-index:100;background:rgba(13,17,23,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--brd);padding:.6rem 1.5rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.step-btn{font-family:var(--body);font-size:12px;padding:5px 12px;border-radius:6px;border:1px solid var(--brd);background:var(--surf);color:var(--txt-m);cursor:pointer;transition:all .15s;white-space:nowrap}
+.step-btn:hover{background:var(--surf2);color:var(--txt);border-color:var(--pur)}
+.step-btn.primary{background:var(--pur);color:#fff;border-color:var(--pur)}
+.step-btn.primary:hover{background:#6D28D9}
+.step-info{font-size:11px;color:var(--txt-d);font-family:var(--code);margin-left:auto}
+.prog-wrap{width:100%;height:2px;background:var(--brd);border-radius:1px;overflow:hidden;order:99}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--pur),var(--teal));border-radius:1px;transition:width .3s}
+
+/* ── 본문 좌우 분할 ── */
+.main-layout{display:grid;grid-template-columns:420px 1fr;height:calc(100vh - 108px);overflow:hidden}
+@media(max-width:800px){.main-layout{grid-template-columns:1fr;height:auto;overflow:visible}}
+.left-pane{border-right:1px solid var(--brd);overflow-y:auto;overflow-x:hidden;background:var(--surf);display:flex;flex-direction:column}
+.left-pane-hdr{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:6px;padding:.55rem 1rem;border-bottom:1px solid var(--brd);font-size:10px;color:var(--txt-m);font-weight:600;letter-spacing:.06em;background:var(--surf);flex-shrink:0}
+.right-pane{overflow-y:auto;overflow-x:hidden;background:var(--bg)}
+.right-pane-inner{padding:1.25rem 1.25rem 2rem}
+
+/* ── 본문 좌우 분할 ── */
+.main-layout{display:grid;grid-template-columns:420px 1fr;height:calc(100vh - 108px);overflow:hidden}
+@media(max-width:800px){.main-layout{grid-template-columns:1fr;height:auto;overflow:visible}}
+.left-pane{border-right:1px solid var(--brd);overflow-y:auto;overflow-x:hidden;background:var(--surf);display:flex;flex-direction:column}
+.left-pane-hdr{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:6px;padding:.55rem 1rem;border-bottom:1px solid var(--brd);font-size:10px;color:var(--txt-m);font-weight:600;letter-spacing:.06em;background:var(--surf);flex-shrink:0}
+.right-pane{overflow-y:auto;overflow-x:hidden;background:var(--bg)}
+.right-pane-inner{padding:1.25rem 1.25rem 2rem}
+
+/* ── 단계 제목 ── */
+.step-title{display:flex;align-items:center;gap:10px;margin-bottom:1rem}
+.step-title .badge{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 10px;border-radius:12px}
+.step-title h2{font-size:1rem;font-weight:700;color:var(--txt);line-height:1.3}
+
+/* ── 코드 블록 ── */
+.code-card{background:var(--surf);border:1px solid var(--brd);border-radius:10px;overflow:hidden}
+.code-card-hdr{display:flex;align-items:center;gap:6px;padding:.55rem 1rem;border-bottom:1px solid var(--brd);font-size:10px;color:var(--txt-m);font-weight:600;letter-spacing:.06em}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.code-body{padding:.75rem 0;overflow-x:auto;font-family:var(--code);font-size:12px;line-height:1.9}
+.cl{display:flex;align-items:stretch;border-left:3px solid transparent;min-height:24px}
+.cl.hi{background:var(--pur-bg);border-left-color:var(--pur)}
+.ln{min-width:38px;padding:0 10px 0 6px;text-align:right;color:var(--txt-d);font-size:10px;user-select:none;display:flex;align-items:center;justify-content:flex-end;flex-shrink:0}
+.cl.hi .ln{color:var(--pur-l)}
+.ct{padding:0 14px 0 2px;white-space:pre;color:var(--txt)}
+.ct.cm{color:#4A5568;font-style:italic}
+.sep{height:6px}
+.kw{color:#C792EA}.fn{color:#82AAFF}.st{color:#C3E88D}
+.num{color:#F78C6C}.op{color:#89DDFF}.pu{color:#89DDFF}
+.dc{color:#3B5249;font-style:italic}
+.cm-i{color:#4A5568;font-style:italic}
+
+/* ── 설명 카드 ── */
+.explain-card{background:var(--surf);border:1px solid var(--brd);border-radius:10px;overflow:hidden}
+.ec-hdr{padding:.55rem 1rem;border-bottom:1px solid var(--brd);font-size:11px;font-weight:700;display:flex;align-items:center;gap:7px}
+.ec-body{padding:.85rem 1rem;font-size:13px;line-height:1.8;color:var(--txt-m)}
+.ec-body strong{color:var(--txt);font-weight:500}
+.ec-body code{font-family:var(--code);font-size:11.5px;background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px;color:var(--amb-l)}
+.ec-body .step-line{display:flex;gap:8px;align-items:flex-start;margin:.2rem 0;font-size:12.5px}
+.ec-body .step-line .mark{flex-shrink:0;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;margin-top:1px}
+.note{margin-top:.6rem;padding:.5rem .75rem;background:rgba(255,255,255,.04);border-left:2px solid var(--brd);border-radius:0 4px 4px 0;font-size:11.5px;color:var(--txt-d)}
+
+/* ── 배열 시각화 ── */
+.viz-card{background:var(--surf);border:1px solid var(--brd);border-radius:10px;padding:.9rem 1rem;margin-bottom:.85rem}
+.viz-label{font-size:10px;color:var(--txt-m);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.6rem;display:flex;align-items:center;gap:6px}
+.arr-row{display:flex;gap:5px;align-items:flex-end;flex-wrap:wrap}
+.bar-w{display:flex;flex-direction:column;align-items:center;gap:3px}
+.bar{border-radius:4px 4px 0 0;display:flex;align-items:flex-start;justify-content:center;padding-top:3px;font-size:12px;font-weight:600;font-family:var(--code);transition:all .3s cubic-bezier(.4,0,.2,1);width:40px}
+.bar-lbl{font-size:9px;color:var(--txt-d);font-family:var(--code)}
+/* 색상 */
+.c-def{background:rgba(124,58,237,.28);color:var(--pur-l);border:1px solid rgba(124,58,237,.45)}
+.c-left{background:rgba(220,38,38,.28);color:var(--red-l);border:1px solid rgba(220,38,38,.45);transform:translateY(-6px)}
+.c-right{background:rgba(29,78,216,.28);color:var(--blu-l);border:1px solid rgba(29,78,216,.45);transform:translateY(-6px)}
+.c-active-l{background:rgba(220,38,38,.55);color:#fff;border:1px solid var(--red-l);transform:translateY(-10px)}
+.c-active-r{background:rgba(29,78,216,.55);color:#fff;border:1px solid var(--blu-l);transform:translateY(-10px)}
+.c-result{background:rgba(22,163,74,.28);color:var(--grn-l);border:1px solid rgba(22,163,74,.45)}
+.c-done{background:rgba(13,148,136,.3);color:var(--teal-l);border:1px solid rgba(13,148,136,.5)}
+.c-new{background:rgba(22,163,74,.5);color:#fff;border:1px solid var(--grn-l);transform:translateY(-5px)}
+
+/* 포인터 화살표 */
+.ptr{font-size:9px;font-weight:700;text-align:center;width:40px;font-family:var(--code)}
+
+/* ── 재귀 트리 ── */
+.tree-card{background:var(--surf);border:1px solid var(--brd);border-radius:10px;padding:.9rem 1rem;margin-bottom:.85rem;overflow-x:auto}
+.tree-grid{display:flex;flex-direction:column;gap:2px}
+.tree-lv{display:flex;align-items:center;gap:4px;padding-left:var(--indent,0px)}
+.tn{font-family:var(--code);font-size:10.5px;padding:2px 8px;border-radius:4px;white-space:nowrap;border:1px solid}
+.tn-root{background:rgba(124,58,237,.15);border-color:rgba(124,58,237,.4);color:var(--pur-l)}
+.tn-left{background:rgba(220,38,38,.12);border-color:rgba(220,38,38,.35);color:var(--red-l)}
+.tn-right{background:rgba(29,78,216,.12);border-color:rgba(29,78,216,.35);color:var(--blu-l)}
+.tn-leaf{background:rgba(13,148,136,.12);border-color:rgba(13,148,136,.35);color:var(--teal-l)}
+.tn-done{background:rgba(22,163,74,.18);border-color:rgba(22,163,74,.4);color:var(--grn-l);font-weight:600}
+.tn-cur{outline:1.5px solid var(--amb);outline-offset:1px}
+.t-arrow{font-size:9px;color:var(--txt-d)}
+
+/* ── 변수표 ── */
+.var-table{width:100%;border-collapse:collapse;font-family:var(--code);font-size:11.5px;margin-top:.5rem}
+.var-table th{color:var(--txt-m);font-weight:600;font-size:10px;padding:4px 8px;border-bottom:1px solid var(--brd);text-align:left}
+.var-table td{padding:4px 8px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
+.var-table tr:last-child td{border-bottom:none}
+.vv{color:var(--amb-l)}
+.tag{display:inline-flex;align-items:center;font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;margin-left:4px;vertical-align:middle}
+.tag-new{background:rgba(22,163,74,.25);color:var(--grn-l)}
+.tag-chg{background:rgba(217,119,6,.25);color:var(--amb-l)}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-chip">정렬 알고리즘 ③</div>
+  <h1>병합 정렬 코드 완전 해설</h1>
+  <p>단계 버튼을 눌러 코드가 실행되면서 변수와 배열이 어떻게 변하는지 확인하세요</p>
+</div>
+
+<div class="nav-bar">
+  <button class="step-btn" onclick="go(-1)">◀ 이전</button>
+  <button class="step-btn primary" id="autoBtn" onclick="toggleAuto()">▶ 자동</button>
+  <button class="step-btn" onclick="go(1)">다음 ▶</button>
+  <button class="step-btn" onclick="reset()">↺ 처음</button>
+  <span class="step-info" id="stepInfo">1 / 14</span>
+  <div class="prog-wrap"><div class="prog-fill" id="pf" style="width:0%"></div></div>
+</div>
+
+<div class="main-layout">
+  <div class="left-pane">
+    <div class="left-pane-hdr">
+      <div class="dot" style="background:#FF5F57"></div>
+      <div class="dot" style="background:#FEBC2E"></div>
+      <div class="dot" style="background:#28C840"></div>
+      <span style="margin-left:4px">merge_sort.py</span>
+    </div>
+    <div id="codePane"></div>
+  </div>
+  <div class="right-pane">
+    <div class="right-pane-inner">
+      <div class="step-title" id="stepTitle"></div>
+      <div id="explainPane"></div>
+      <div id="vizPane"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const MX=8;
+function bh(v){return Math.max(Math.round((v/MX)*68),8)}
+
+// 코드 라인 정의 (ln: 줄번호, code: HTML, grp: 그룹)
+const LINES=[
+  {ln:1,  code:'<span class="cm-i"># ────────────────────────────────────</span>'},
+  {ln:2,  code:'<span class="cm-i"># 병합 정렬 (Merge Sort)</span>'},
+  {ln:3,  code:'<span class="cm-i"># 배열: [8, 3, 1, 5, 2, 7]</span>'},
+  {ln:4,  code:'<span class="cm-i"># ────────────────────────────────────</span>'},
+  {ln:'', sep:true},
+  {ln:5,  code:'<span class="kw">def </span><span class="fn">merge</span><span class="pu">(left, right):</span>'},
+  {ln:6,  code:'    <span class="dc">"""정렬된 두 배열을 하나로 합치는 함수"""</span>'},
+  {ln:7,  code:'    <span class="fn">result</span> <span class="op">=</span> <span class="pu">[];</span>  <span class="fn">i</span> <span class="op">=</span> <span class="fn">j</span> <span class="op">=</span> <span class="num">0</span>'},
+  {ln:8,  code:'    <span class="cm-i"># 작은 쪽을 result에 추가</span>'},
+  {ln:9,  code:'    <span class="kw">while</span> <span class="fn">i</span> <span class="op">&lt;</span> <span class="fn">len</span><span class="pu">(left)</span> <span class="kw">and</span> <span class="fn">j</span> <span class="op">&lt;</span> <span class="fn">len</span><span class="pu">(right):</span>'},
+  {ln:10, code:'        <span class="kw">if</span> <span class="fn">left</span><span class="pu">[</span><span class="fn">i</span><span class="pu">]</span> <span class="op">&lt;=</span> <span class="fn">right</span><span class="pu">[</span><span class="fn">j</span><span class="pu">]:</span>'},
+  {ln:11, code:'            <span class="fn">result</span><span class="pu">.</span><span class="fn">append</span><span class="pu">(</span><span class="fn">left</span><span class="pu">[</span><span class="fn">i</span><span class="pu">]);</span>  <span class="fn">i</span> <span class="op">+=</span> <span class="num">1</span>'},
+  {ln:12, code:'        <span class="kw">else</span><span class="pu">:</span>'},
+  {ln:13, code:'            <span class="fn">result</span><span class="pu">.</span><span class="fn">append</span><span class="pu">(</span><span class="fn">right</span><span class="pu">[</span><span class="fn">j</span><span class="pu">]);</span> <span class="fn">j</span> <span class="op">+=</span> <span class="num">1</span>'},
+  {ln:14, code:'    <span class="cm-i"># 남은 원소 이어 붙임</span>'},
+  {ln:15, code:'    <span class="fn">result</span> <span class="op">+=</span> <span class="fn">left</span><span class="pu">[</span><span class="fn">i</span><span class="pu">:]</span> <span class="op">+</span> <span class="fn">right</span><span class="pu">[</span><span class="fn">j</span><span class="pu">:]</span>'},
+  {ln:16, code:'    <span class="kw">return</span> <span class="fn">result</span>'},
+  {ln:'', sep:true},
+  {ln:17, code:'<span class="kw">def </span><span class="fn">merge_sort</span><span class="pu">(arr):</span>'},
+  {ln:18, code:'    <span class="dc">"""배열을 재귀적으로 분할하고 병합하는 함수"""</span>'},
+  {ln:19, code:'    <span class="kw">if</span> <span class="fn">len</span><span class="pu">(arr)</span> <span class="op">&lt;=</span> <span class="num">1</span><span class="pu">:</span>'},
+  {ln:20, code:'        <span class="kw">return</span> <span class="fn">arr</span>   <span class="cm-i"># 종료 조건: 1개는 이미 정렬됨</span>'},
+  {ln:21, code:'    <span class="fn">mid</span> <span class="op">=</span> <span class="fn">len</span><span class="pu">(arr)</span> <span class="op">//</span> <span class="num">2</span>   <span class="cm-i"># 절반 위치</span>'},
+  {ln:22, code:'    <span class="fn">left</span>  <span class="op">=</span> <span class="fn">merge_sort</span><span class="pu">(arr[:mid])</span>  <span class="cm-i"># 왼쪽 재귀</span>'},
+  {ln:23, code:'    <span class="fn">right</span> <span class="op">=</span> <span class="fn">merge_sort</span><span class="pu">(arr[mid:])</span>  <span class="cm-i"># 오른쪽 재귀</span>'},
+  {ln:24, code:'    <span class="kw">return</span> <span class="fn">merge</span><span class="pu">(left, right)</span>    <span class="cm-i"># 병합!</span>'},
+  {ln:'', sep:true},
+  {ln:25, code:'<span class="fn">arr</span> <span class="op">=</span> <span class="pu">[</span><span class="num">8</span><span class="pu">,</span><span class="num">3</span><span class="pu">,</span><span class="num">1</span><span class="pu">,</span><span class="num">5</span><span class="pu">,</span><span class="num">2</span><span class="pu">,</span><span class="num">7</span><span class="pu">]</span>'},
+  {ln:26, code:'<span class="fn">print</span><span class="pu">(</span><span class="fn">merge_sort</span><span class="pu">(arr))</span>'},
+  {ln:27, code:'<span class="cm-i"># 출력: [1, 2, 3, 5, 7, 8]</span>'},
+];
+
+function bars(arr,clsArr,ptrs){
+  // arr: 값 배열, clsArr: 각 원소 색상 클래스, ptrs: {i:idx,j:idx}
+  return arr.map((v,k)=>{
+    const pL=ptrs&&ptrs.i===k?`<div class="ptr" style="color:#FCA5A5">↑i</div>`:'';
+    const pR=ptrs&&ptrs.j===k?`<div class="ptr" style="color:#93C5FD">↑j</div>`:'';
+    const ptr=pL||pR||'';
+    return `<div class="bar-w">${ptr}<div class="bar ${clsArr?clsArr[k]:'c-def'}" style="height:${bh(v)}px">${v}</div><div class="bar-lbl">[${k}]</div></div>`;
+  }).join('');
+}
+
+// ── 검증된 14개 단계 ──────────────────────────────────────────────
+const STEPS=[
+
+/* 0 */ {
+  hlLines:[25],
+  color:'#7C3AED', label:'01', title:'초기 배열 설정',
+  explain:{
+    hdr:'arr = [8, 3, 1, 5, 2, 7]',
+    items:[
+      {c:'#A78BFA',t:'<code>arr = [8, 3, 1, 5, 2, 7]</code> — 정렬할 배열을 메모리에 저장합니다.'},
+      {c:'#A78BFA',t:'총 <strong>6개</strong> 원소, 인덱스는 0~5입니다.'},
+      {c:'#A78BFA',t:'이제 <code>print(merge_sort(arr))</code>를 호출합니다.'},
+    ],
+    note:'파이썬에서 리스트(list)는 대괄호 []로 만들고, 각 원소는 인덱스 0부터 접근합니다.'
+  },
+  tree:[{txt:'merge_sort([8,3,1,5,2,7])',cls:'tn-root tn-cur',indent:0}],
+  viz:[{lbl:'arr — 초기 배열',arr:[8,3,1,5,2,7],cls:['c-def','c-def','c-def','c-def','c-def','c-def']}],
+  vars:[{n:'arr',v:'[8, 3, 1, 5, 2, 7]',t:'new'}],
+},
+
+/* 1 */ {
+  hlLines:[26,17,18,19],
+  color:'#7C3AED', label:'02', title:'merge_sort() 첫 호출 & 종료조건 확인',
+  explain:{
+    hdr:'merge_sort([8,3,1,5,2,7]) 시작',
+    items:[
+      {c:'#A78BFA',t:'<code>len(arr) = 6</code>,  6 ≤ 1은 <strong>False</strong> → 계속 진행'},
+      {c:'#A78BFA',t:'원소가 2개 이상이므로 분할을 시작합니다.'},
+    ],
+    note:'종료 조건(len ≤ 1)은 재귀가 무한히 반복되지 않도록 막아주는 안전장치입니다.'
+  },
+  tree:[{txt:'merge_sort([8,3,1,5,2,7])',cls:'tn-root tn-cur',indent:0}],
+  viz:[{lbl:'arr (함수 파라미터)',arr:[8,3,1,5,2,7],cls:['c-def','c-def','c-def','c-def','c-def','c-def']}],
+  vars:[{n:'arr',v:'[8, 3, 1, 5, 2, 7]'},{n:'len(arr)',v:'6'},{n:'6 ≤ 1?',v:'False → 계속!',t:'chg'}],
+},
+
+/* 2 */ {
+  hlLines:[21,22,23],
+  color:'#DC2626', label:'03', title:'mid 계산 & 왼쪽·오른쪽 분할',
+  explain:{
+    hdr:'mid = 6 // 2 = 3  →  절반으로 나누기',
+    items:[
+      {c:'#FCA5A5',t:'<code>mid = len(arr) // 2 = 6 // 2 = <strong>3</strong></code>'},
+      {c:'#FCA5A5',t:'<code>arr[:3]</code> = <strong>[8, 3, 1]</strong>  →  왼쪽'},
+      {c:'#93C5FD',t:'<code>arr[3:]</code> = <strong>[5, 2, 7]</strong>  →  오른쪽'},
+      {c:'#FCA5A5',t:'<code>merge_sort([8,3,1])</code> 재귀 호출 — 함수가 자신을 다시 부릅니다!'},
+    ],
+    note:'// 는 정수 나눗셈입니다. 6//2=3, 7//2=3 (소수점 버림)'
+  },
+  tree:[
+    {txt:'merge_sort([8,3,1,5,2,7])',cls:'tn-root',indent:0},
+    {txt:'↙ merge_sort([8,3,1])',cls:'tn-left tn-cur',indent:16},
+    {txt:'↘ merge_sort([5,2,7])',cls:'tn-right',indent:16},
+  ],
+  viz:[
+    {lbl:'왼쪽 arr[:3]  (빨강)',arr:[8,3,1],cls:['c-left','c-left','c-left']},
+    {lbl:'오른쪽 arr[3:]  (파랑)',arr:[5,2,7],cls:['c-right','c-right','c-right']},
+  ],
+  vars:[{n:'mid',v:'3',t:'new'},{n:'arr[:3]',v:'[8, 3, 1]  → 왼쪽 재귀'},{n:'arr[3:]',v:'[5, 2, 7]  → 오른쪽 재귀'}],
+},
+
+/* 3 */ {
+  hlLines:[21,22,23],
+  color:'#DC2626', label:'04', title:'[8,3,1] 분할  →  [8] | [3,1]',
+  explain:{
+    hdr:'merge_sort([8,3,1]) 내부',
+    items:[
+      {c:'#FCA5A5',t:'<code>mid = 3 // 2 = <strong>1</strong></code>'},
+      {c:'#FCA5A5',t:'<code>arr[:1]</code> = <strong>[8]</strong>  →  왼쪽'},
+      {c:'#93C5FD',t:'<code>arr[1:]</code> = <strong>[3, 1]</strong>  →  오른쪽'},
+      {c:'#FCD34D',t:'<strong>[8]</strong> 은 원소 1개 → 종료 조건 만족! 바로 반환됩니다.'},
+    ],
+    note:'원소가 1개인 배열은 이미 정렬된 상태입니다. 더 이상 나눌 필요가 없어요.'
+  },
+  tree:[
+    {txt:'merge_sort([8,3,1,5,2,7])',cls:'tn-root',indent:0},
+    {txt:'merge_sort([8,3,1])',cls:'tn-left tn-cur',indent:16},
+    {txt:'↙ [8] ✓ 종료',cls:'tn-leaf',indent:32},
+    {txt:'↘ merge_sort([3,1])',cls:'tn-left',indent:32},
+    {txt:'merge_sort([5,2,7])',cls:'tn-right',indent:16},
+  ],
+  viz:[
+    {lbl:'[8]  — 원소 1개 → 즉시 반환',arr:[8],cls:['c-done']},
+    {lbl:'[3, 1]  — 아직 분할 필요',arr:[3,1],cls:['c-left','c-left']},
+  ],
+  vars:[{n:'arr',v:'[8, 3, 1]'},{n:'mid',v:'1',t:'chg'},{n:'[8]',v:'len=1 → return [8]!',t:'new'}],
+},
+
+/* 4 */ {
+  hlLines:[21,22,23,19,20],
+  color:'#DC2626', label:'05', title:'[3,1] 분할  →  [3] | [1]  →  둘 다 종료',
+  explain:{
+    hdr:'merge_sort([3,1]) 내부',
+    items:[
+      {c:'#FCA5A5',t:'<code>mid = 2 // 2 = <strong>1</strong></code>'},
+      {c:'#FCA5A5',t:'<code>arr[:1]</code> = <strong>[3]</strong>  →  왼쪽'},
+      {c:'#93C5FD',t:'<code>arr[1:]</code> = <strong>[1]</strong>  →  오른쪽'},
+      {c:'#86EFAC',t:'<strong>[3]</strong> 원소 1개 → 종료!  <strong>[1]</strong> 원소 1개 → 종료!'},
+    ],
+    note:'이제 최하단까지 쪼갰습니다. 분할 단계 완료! 이제 병합을 시작합니다.'
+  },
+  tree:[
+    {txt:'merge_sort([8,3,1,5,2,7])',cls:'tn-root',indent:0},
+    {txt:'merge_sort([8,3,1])',cls:'tn-left',indent:16},
+    {txt:'[8] ✓',cls:'tn-leaf',indent:32},
+    {txt:'merge_sort([3,1])',cls:'tn-left tn-cur',indent:32},
+    {txt:'↙ [3] ✓ 종료',cls:'tn-leaf',indent:48},
+    {txt:'↘ [1] ✓ 종료',cls:'tn-leaf',indent:48},
+    {txt:'merge_sort([5,2,7])',cls:'tn-right',indent:16},
+  ],
+  viz:[
+    {lbl:'[3]  — 종료 조건 만족',arr:[3],cls:['c-done']},
+    {lbl:'[1]  — 종료 조건 만족',arr:[1],cls:['c-done']},
+  ],
+  vars:[{n:'arr',v:'[3, 1]'},{n:'mid',v:'1',t:'chg'},{n:'[3]',v:'return [3]'},{n:'[1]',v:'return [1]'}],
+},
+
+/* 5 */ {
+  hlLines:[24,5,6,7,8,9,10,11,12,13,14,15,16],
+  color:'#16A34A', label:'06', title:'병합 ①  :  merge([3], [1])  →  [1, 3]',
+  explain:{
+    hdr:'merge([3], [1]) — 두 1개짜리를 합칩니다',
+    items:[
+      {c:'#86EFAC',t:'<strong>초기:</strong> result=[], i=0, j=0'},
+      {c:'#FCA5A5',t:'<strong>비교:</strong> left[0]=<strong>3</strong>  >  right[0]=<strong>1</strong>  →  else: result.append(right[0]=<strong>1</strong>), j=1'},
+      {c:'#86EFAC',t:'<strong>while 종료:</strong> j=1 = len(right) → 조건 불만족'},
+      {c:'#86EFAC',t:'<strong>나머지 붙임:</strong> result += left[0:]=[<strong>3</strong>] + right[1:]=[]'},
+      {c:'#86EFAC',t:'<strong>return [1, 3]</strong>'},
+    ],
+    note:'while이 끝난 뒤 남은 쪽을 result += 로 이어 붙이는 것이 핵심입니다.'
+  },
+  tree:[
+    {txt:'merge_sort([8,3,1,5,2,7])',cls:'tn-root',indent:0},
+    {txt:'merge_sort([8,3,1])',cls:'tn-left',indent:16},
+    {txt:'[8] ✓',cls:'tn-leaf',indent:32},
+    {txt:'merge([3],[1]) → [1,3] ✓',cls:'tn-done tn-cur',indent:32},
+    {txt:'merge_sort([5,2,7])',cls:'tn-right',indent:16},
+  ],
+  viz:[
+    {lbl:'left = [3]',arr:[3],cls:['c-left'],ptrs:{i:0}},
+    {lbl:'right = [1]',arr:[1],cls:['c-right'],ptrs:{j:0}},
+    {lbl:'result → [1, 3]',arr:[1,3],cls:['c-result','c-new']},
+  ],
+  vars:[{n:'left',v:'[3]'},{n:'right',v:'[1]'},{n:'i→',v:'0→1 (left 소진)'},{n:'j→',v:'0→1 (right 소진)'},{n:'result',v:'[1, 3]',t:'new'}],
+},
+
+/* 6 */ {
+  hlLines:[24,5,6,7,8,9,10,11,12,13,14,15,16],
+  color:'#16A34A', label:'07', title:'병합 ②  :  merge([8], [1,3])  →  [1, 3, 8]',
+  explain:{
+    hdr:'merge([8], [1,3]) — [8]과 [1,3]을 합칩니다',
+    items:[
+      {c:'#86EFAC',t:'<strong>초기:</strong> result=[], i=0, j=0'},
+      {c:'#FCA5A5',t:'<strong>비교 ①:</strong> left[0]=<strong>8</strong> > right[0]=<strong>1</strong>  →  result.append(1), j=1'},
+      {c:'#FCA5A5',t:'<strong>비교 ②:</strong> left[0]=<strong>8</strong> > right[1]=<strong>3</strong>  →  result.append(3), j=2'},
+      {c:'#86EFAC',t:'<strong>while 종료:</strong> j=2 = len(right=2) → 조건 불만족'},
+      {c:'#86EFAC',t:'<strong>나머지 붙임:</strong> result += left[0:]=[<strong>8</strong>] + right[2:]=[]'},
+      {c:'#86EFAC',t:'<strong>return [1, 3, 8]</strong>  ← 왼쪽 절반 정렬 완료!'},
+    ],
+    note:'while이 끝난 뒤 left[i:]=[8]이 남아있으므로 result에 이어 붙입니다.'
+  },
+  tree:[
+    {txt:'merge_sort([8,3,1,5,2,7])',cls:'tn-root',indent:0},
+    {txt:'merge([8],[1,3]) → [1,3,8] ✓',cls:'tn-done tn-cur',indent:16},
+    {txt:'merge_sort([5,2,7])',cls:'tn-right',indent:16},
+  ],
+  viz:[
+    {lbl:'left = [8]',arr:[8],cls:['c-left'],ptrs:{i:0}},
+    {lbl:'right = [1, 3]',arr:[1,3],cls:['c-right','c-right'],ptrs:{j:0}},
+    {lbl:'result → [1, 3, 8]  (왼쪽 절반 완성!)',arr:[1,3,8],cls:['c-result','c-result','c-new']},
+  ],
+  vars:[{n:'left',v:'[8]'},{n:'right',v:'[1, 3]'},{n:'비교 횟수',v:'2회'},{n:'i→',v:'0 (left 소진은 나머지 붙임)'},{n:'j→',v:'0→1→2'},{n:'result',v:'[1, 3, 8]',t:'chg'}],
+},
+
+/* 7 */ {
+  hlLines:[23,21],
+  color:'#1D4ED8', label:'08', title:'오른쪽 [5,2,7] 분할  →  [5] | [2,7]',
+  explain:{
+    hdr:'merge_sort([5,2,7]) 내부',
+    items:[
+      {c:'#93C5FD',t:'<code>mid = 3 // 2 = <strong>1</strong></code>'},
+      {c:'#FCA5A5',t:'<code>arr[:1]</code> = <strong>[5]</strong>  →  왼쪽 (원소 1개 → 종료!)'},
+      {c:'#93C5FD',t:'<code>arr[1:]</code> = <strong>[2, 7]</strong>  →  오른쪽 (한번 더 분할)'},
+    ],
+    note:'[5]는 원소가 1개이므로 바로 반환. [2,7]은 한 번 더 분할합니다.'
+  },
+  tree:[
+    {txt:'merge_sort([8,3,1,5,2,7])',cls:'tn-root',indent:0},
+    {txt:'[1,3,8] ✓',cls:'tn-done',indent:16},
+    {txt:'merge_sort([5,2,7])',cls:'tn-right tn-cur',indent:16},
+    {txt:'↙ [5] ✓ 종료',cls:'tn-leaf',indent:32},
+    {txt:'↘ merge_sort([2,7])',cls:'tn-right',indent:32},
+  ],
+  viz:[
+    {lbl:'[5]  — 종료 조건',arr:[5],cls:['c-done']},
+    {lbl:'[2, 7]  — 분할 필요',arr:[2,7],cls:['c-right','c-right']},
+  ],
+  vars:[{n:'arr',v:'[5, 2, 7]'},{n:'mid',v:'1',t:'chg'},{n:'[5]',v:'return [5]'},{n:'arr[1:]',v:'[2, 7]  → 재귀'}],
+},
+
+/* 8 */ {
+  hlLines:[21,22,23,19,20],
+  color:'#1D4ED8', label:'09', title:'[2,7] 분할  →  [2] | [7]  →  둘 다 종료',
+  explain:{
+    hdr:'merge_sort([2,7]) 내부',
+    items:[
+      {c:'#93C5FD',t:'<code>mid = 2 // 2 = <strong>1</strong></code>'},
+      {c:'#FCA5A5',t:'<strong>[2]</strong> — 원소 1개 → return [2]'},
+      {c:'#93C5FD',t:'<strong>[7]</strong> — 원소 1개 → return [7]'},
+    ],
+    note:'이제 오른쪽 절반도 최하단까지 분할 완료! 다시 병합합니다.'
+  },
+  tree:[
+    {txt:'merge_sort([8,3,1,5,2,7])',cls:'tn-root',indent:0},
+    {txt:'[1,3,8] ✓',cls:'tn-done',indent:16},
+    {txt:'merge_sort([5,2,7])',cls:'tn-right',indent:16},
+    {txt:'[5] ✓',cls:'tn-leaf',indent:32},
+    {txt:'merge_sort([2,7])',cls:'tn-right tn-cur',indent:32},
+    {txt:'↙ [2] ✓',cls:'tn-leaf',indent:48},
+    {txt:'↘ [7] ✓',cls:'tn-leaf',indent:48},
+  ],
+  viz:[
+    {lbl:'[2]  — 종료',arr:[2],cls:['c-done']},
+    {lbl:'[7]  — 종료',arr:[7],cls:['c-done']},
+  ],
+  vars:[{n:'arr',v:'[2, 7]'},{n:'mid',v:'1',t:'chg'},{n:'[2]',v:'return [2]'},{n:'[7]',v:'return [7]'}],
+},
+
+/* 9 */ {
+  hlLines:[24,5,6,7,8,9,10,11,14,15,16],
+  color:'#16A34A', label:'10', title:'병합 ③  :  merge([2], [7])  →  [2, 7]',
+  explain:{
+    hdr:'merge([2], [7]) — 두 1개짜리를 합칩니다',
+    items:[
+      {c:'#86EFAC',t:'<strong>초기:</strong> result=[], i=0, j=0'},
+      {c:'#93C5FD',t:'<strong>비교:</strong> left[0]=<strong>2</strong> ≤ right[0]=<strong>7</strong>  →  if: result.append(left[0]=<strong>2</strong>), i=1'},
+      {c:'#86EFAC',t:'<strong>while 종료:</strong> i=1 = len(left=1) → 조건 불만족'},
+      {c:'#86EFAC',t:'<strong>나머지 붙임:</strong> result += left[1:]=[] + right[0:]=[<strong>7</strong>]'},
+      {c:'#86EFAC',t:'<strong>return [2, 7]</strong>'},
+    ],
+    note:'2 ≤ 7이므로 left[0]=2를 먼저 추가. 그 다음 나머지 right=[7]을 이어 붙입니다.'
+  },
+  tree:[
+    {txt:'merge_sort([8,3,1,5,2,7])',cls:'tn-root',indent:0},
+    {txt:'[1,3,8] ✓',cls:'tn-done',indent:16},
+    {txt:'merge_sort([5,2,7])',cls:'tn-right',indent:16},
+    {txt:'[5] ✓',cls:'tn-leaf',indent:32},
+    {txt:'merge([2],[7]) → [2,7] ✓',cls:'tn-done tn-cur',indent:32},
+  ],
+  viz:[
+    {lbl:'left = [2]',arr:[2],cls:['c-left'],ptrs:{i:0}},
+    {lbl:'right = [7]',arr:[7],cls:['c-right'],ptrs:{j:0}},
+    {lbl:'result → [2, 7]',arr:[2,7],cls:['c-result','c-new']},
+  ],
+  vars:[{n:'left',v:'[2]'},{n:'right',v:'[7]'},{n:'i→',v:'0→1 (left 소진)'},{n:'j→',v:'0'},{n:'result',v:'[2, 7]',t:'new'}],
+},
+
+/* 10 */ {
+  hlLines:[24,5,6,7,8,9,10,11,12,13,14,15,16],
+  color:'#16A34A', label:'11', title:'병합 ④  :  merge([5], [2,7])  →  [2, 5, 7]',
+  explain:{
+    hdr:'merge([5], [2,7]) — [5]와 [2,7]을 합칩니다',
+    items:[
+      {c:'#86EFAC',t:'<strong>초기:</strong> result=[], i=0, j=0'},
+      {c:'#FCA5A5',t:'<strong>비교 ①:</strong> left[0]=<strong>5</strong> > right[0]=<strong>2</strong>  →  result.append(2), j=1'},
+      {c:'#93C5FD',t:'<strong>비교 ②:</strong> left[0]=<strong>5</strong> ≤ right[1]=<strong>7</strong>  →  result.append(5), i=1'},
+      {c:'#86EFAC',t:'<strong>while 종료:</strong> i=1 = len(left=1) → 조건 불만족'},
+      {c:'#86EFAC',t:'<strong>나머지 붙임:</strong> result += left[1:]=[] + right[1:]=[<strong>7</strong>]'},
+      {c:'#86EFAC',t:'<strong>return [2, 5, 7]</strong>  ← 오른쪽 절반 정렬 완료!'},
+    ],
+    note:'while이 끝난 뒤 right[1:]=[7]이 남아있으므로 result에 이어 붙입니다.'
+  },
+  tree:[
+    {txt:'merge_sort([8,3,1,5,2,7])',cls:'tn-root',indent:0},
+    {txt:'[1,3,8] ✓',cls:'tn-done',indent:16},
+    {txt:'merge([5],[2,7]) → [2,5,7] ✓',cls:'tn-done tn-cur',indent:16},
+  ],
+  viz:[
+    {lbl:'left = [5]',arr:[5],cls:['c-left'],ptrs:{i:0}},
+    {lbl:'right = [2, 7]',arr:[2,7],cls:['c-right','c-right'],ptrs:{j:0}},
+    {lbl:'result → [2, 5, 7]  (오른쪽 절반 완성!)',arr:[2,5,7],cls:['c-result','c-result','c-new']},
+  ],
+  vars:[{n:'left',v:'[5]'},{n:'right',v:'[2, 7]'},{n:'비교 횟수',v:'2회'},{n:'i→',v:'0→1'},{n:'j→',v:'0→1'},{n:'result',v:'[2, 5, 7]',t:'chg'}],
+},
+
+/* 11 */ {
+  hlLines:[24,5,6,7,8,9,10,11,12,13,14,15,16],
+  color:'#0D9488', label:'12', title:'최종 병합 ⑤  :  merge([1,3,8], [2,5,7])  →  [1,2,3,5,7,8]',
+  explain:{
+    hdr:'merge([1,3,8], [2,5,7]) — 최종 병합!',
+    items:[
+      {c:'#5EEAD4',t:'<strong>비교 ①:</strong> left[0]=<strong>1</strong> ≤ right[0]=<strong>2</strong>  →  append(1), i=1'},
+      {c:'#5EEAD4',t:'<strong>비교 ②:</strong> left[1]=<strong>3</strong> > right[0]=<strong>2</strong>  →  append(2), j=1'},
+      {c:'#5EEAD4',t:'<strong>비교 ③:</strong> left[1]=<strong>3</strong> ≤ right[1]=<strong>5</strong>  →  append(3), i=2'},
+      {c:'#5EEAD4',t:'<strong>비교 ④:</strong> left[2]=<strong>8</strong> > right[1]=<strong>5</strong>  →  append(5), j=2'},
+      {c:'#5EEAD4',t:'<strong>비교 ⑤:</strong> left[2]=<strong>8</strong> > right[2]=<strong>7</strong>  →  append(7), j=3'},
+      {c:'#5EEAD4',t:'<strong>while 종료:</strong> j=3 = len(right=3)'},
+      {c:'#86EFAC',t:'<strong>나머지:</strong> result += left[2:]=[<strong>8</strong>] + right[3:]=[]  →  <strong>[1,2,3,5,7,8]</strong>'},
+    ],
+    note:'총 5번 비교로 6개 원소를 완전히 정렬했습니다. while 종료 후 left[2:]=[8]이 남아 이어 붙임!'
+  },
+  tree:[{txt:'[1, 2, 3, 5, 7, 8] ✓ 정렬 완료!',cls:'tn-done tn-cur',indent:0}],
+  viz:[
+    {lbl:'left = [1, 3, 8]',arr:[1,3,8],cls:['c-left','c-left','c-left']},
+    {lbl:'right = [2, 5, 7]',arr:[2,5,7],cls:['c-right','c-right','c-right']},
+    {lbl:'result → [1, 2, 3, 5, 7, 8]  최종 완성!',arr:[1,2,3,5,7,8],cls:['c-result','c-result','c-result','c-result','c-result','c-new']},
+  ],
+  vars:[{n:'left',v:'[1, 3, 8]'},{n:'right',v:'[2, 5, 7]'},{n:'비교 횟수',v:'5회'},{n:'result',v:'[1, 2, 3, 5, 7, 8]',t:'chg'}],
+},
+
+/* 12 */ {
+  hlLines:[26,27],
+  color:'#0D9488', label:'13', title:'print() 출력 & 정렬 완료!',
+  explain:{
+    hdr:'print(merge_sort(arr)) → [1, 2, 3, 5, 7, 8]',
+    items:[
+      {c:'#5EEAD4',t:'merge_sort()의 최종 반환값 <strong>[1, 2, 3, 5, 7, 8]</strong>이 출력됩니다.'},
+      {c:'#5EEAD4',t:'총 <strong>5번의 병합</strong>으로 6개 원소를 완전히 정렬했습니다.'},
+      {c:'#FCD34D',t:'시간복잡도: <strong>O(n log n)</strong> — 버블·선택의 O(n²)보다 훨씬 빠릅니다!'},
+    ],
+    note:'n=6: O(n log n) ≈ 6×2.58 ≈ 15회 비교.  O(n²) = 30회 비교 (약 2배 차이)'
+  },
+  tree:[{txt:'✓  [1, 2, 3, 5, 7, 8]  출력 완료!',cls:'tn-done',indent:0}],
+  viz:[{lbl:'최종 정렬 결과',arr:[1,2,3,5,7,8],cls:['c-done','c-done','c-done','c-done','c-done','c-done']}],
+  vars:[{n:'결과',v:'[1, 2, 3, 5, 7, 8]',t:'new'},{n:'총 병합',v:'5회'},{n:'시간복잡도',v:'O(n log n)'}],
+},
+];
+
+// ── 렌더 ─────────────────────────────────────────────────────────
+let cur=0, timer=null;
+
+function renderCode(hls){
+  let h='';
+  LINES.forEach(l=>{
+    if(l.sep){h+='<div class="cl sep"></div>';return;}
+    const active=hls&&hls.includes(l.ln);
+    h+=`<div class="cl${active?' hi':''}"><span class="ln">${l.ln}</span><span class="ct">${l.code}</span></div>`;
+  });
+  document.getElementById('codePane').innerHTML=
+    `<div class="code-body" style="padding:.75rem 0;font-family:var(--code);font-size:12px;line-height:1.9">${h}</div>`;
+}
+
+function renderExplain(s){
+  const e=s.explain;
+  const items=e.items.map(it=>`<div class="step-line"><div class="mark" style="background:${it.c}22;color:${it.c};border:1px solid ${it.c}55">▸</div><div>${it.t}</div></div>`).join('');
+  document.getElementById('explainPane').innerHTML=
+    `<div class="explain-card"><div class="ec-hdr" style="color:${s.color}"><svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="${s.color}44" stroke="${s.color}" stroke-width="1.5"/><circle cx="5" cy="5" r="1.8" fill="${s.color}"/></svg> 단계 ${s.label} — ${s.title}</div><div class="ec-body">${items}<div class="note">${e.note}</div></div></div>`;
+}
+
+function renderViz(s){
+  // 재귀 트리
+  let treeH=`<div class="tree-card"><div class="viz-label"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M6 1v4M6 5l-3 3M6 5l3 3" stroke="var(--pur-l)" stroke-width="1.5" stroke-linecap="round"/></svg>재귀 호출 트리</div><div class="tree-grid">`;
+  s.tree.forEach(n=>{
+    treeH+=`<div class="tree-lv" style="--indent:${n.indent}px"><div class="tn ${n.cls}">${n.txt}</div></div>`;
+  });
+  treeH+=`</div></div>`;
+
+  // 배열 시각화
+  let vizH='';
+  s.viz.forEach(v=>{
+    const cellsH=v.arr.map((val,k)=>{
+      const pL=v.ptrs&&v.ptrs.i===k?`<div class="ptr" style="color:#FCA5A5">↑i</div>`:'';
+      const pR=v.ptrs&&v.ptrs.j===k?`<div class="ptr" style="color:#93C5FD">↑j</div>`:'';
+      return `<div class="bar-w">${pL||pR||''}<div class="bar ${v.cls?v.cls[k]:'c-def'}" style="height:${bh(val)}px">${val}</div><div class="bar-lbl">[${k}]</div></div>`;
+    }).join('');
+    vizH+=`<div class="viz-card"><div class="viz-label">${v.lbl}</div><div class="arr-row">${cellsH}</div></div>`;
+  });
+
+  // 변수표
+  let varH=`<div class="viz-card"><div class="viz-label">변수 추적</div><table class="var-table"><thead><tr><th>변수</th><th>값</th></tr></thead><tbody>`;
+  s.vars.forEach(v=>{
+    const tag=v.t?`<span class="tag ${v.t==='new'?'tag-new':'tag-chg'}">${v.t==='new'?'생성':'갱신'}</span>`:'';
+    varH+=`<tr><td>${v.n}</td><td class="vv">${v.v}${tag}</td></tr>`;
+  });
+  varH+=`</tbody></table></div>`;
+
+  document.getElementById('vizPane').innerHTML=treeH+vizH+varH;
+}
+
+function renderStep(){
+  const s=STEPS[cur];
+  const pct=Math.round(((cur+1)/STEPS.length)*100);
+  document.getElementById('pf').style.width=pct+'%';
+  document.getElementById('stepInfo').textContent=`${cur+1} / ${STEPS.length}`;
+  document.getElementById('stepTitle').innerHTML=
+    `<span class="badge" style="background:${s.color}22;color:${s.color};border:1px solid ${s.color}55">단계 ${s.label}</span><h2>${s.title}</h2>`;
+  renderCode(s.hlLines);
+  renderExplain(s);
+  renderViz(s);
+}
+
+function go(d){
+  const n=cur+d;
+  if(n<0||n>=STEPS.length)return;
+  cur=n; renderStep();
+}
+function reset(){cur=0;stopAuto();renderStep();}
+function stopAuto(){if(timer){clearInterval(timer);timer=null;}document.getElementById('autoBtn').textContent='▶ 자동';}
+function toggleAuto(){
+  if(timer){stopAuto();return;}
+  document.getElementById('autoBtn').textContent='⏸ 정지';
+  timer=setInterval(()=>{if(cur>=STEPS.length-1){stopAuto();return;}cur++;renderStep();},2000);
+}
+
+renderStep();
+</script>
+</body>
+</html>

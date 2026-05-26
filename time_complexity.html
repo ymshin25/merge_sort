@@ -1,0 +1,307 @@
+
+<style>
+h2.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+.sec{margin-bottom:2rem}
+.sec-label{font-size:11px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--color-text-tertiary);margin-bottom:.85rem}
+.card{background:var(--color-background-primary);border:.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:12px;padding:2px 10px;border-radius:var(--border-radius-md);font-weight:500}
+.badge-b{background:#E6F1FB;color:#0C447C}
+.badge-p{background:#EEEDFE;color:#3C3489}
+.badge-t{background:#E1F5EE;color:#085041}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:.85rem}
+.slider-row{display:flex;align-items:center;gap:12px;margin:.65rem 0}
+.slider-row label{font-size:13px;color:var(--color-text-secondary);width:80px;flex-shrink:0}
+.slider-row input{flex:1}
+.slider-row .val{font-size:15px;font-weight:500;color:var(--color-text-primary);min-width:56px;text-align:right}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:.75rem}
+.stat{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.65rem .85rem;text-align:center}
+.stat-n{font-size:20px;font-weight:500;color:var(--color-text-primary)}
+.stat-l{font-size:11px;color:var(--color-text-secondary);margin-top:2px}
+.step-card{border:.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:.6rem .85rem;margin:.45rem 0;font-size:13px;line-height:1.6}
+.ratio-bar{height:28px;border-radius:var(--border-radius-md);display:flex;align-items:center;padding:0 10px;font-size:12px;font-weight:500;transition:width .4s,background .3s;white-space:nowrap;overflow:hidden;margin-bottom:6px}
+.vs-row{display:flex;align-items:center;gap:10px;margin:.5rem 0;font-size:13px;color:var(--color-text-secondary)}
+.vs-mid{font-size:11px;font-weight:500;color:var(--color-text-tertiary);white-space:nowrap}
+.analogy-grid{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-top:.5rem}
+.analogy-item{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.7rem .85rem;font-size:12.5px;line-height:1.6}
+.analogy-item .an-label{font-size:10px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--color-text-tertiary);margin-bottom:.3rem}
+</style>
+
+<h2 class="sr-only">시간 복잡도 O(n²)과 O(n log n) 비교 인터랙티브 대시보드. 데이터 개수를 바꿔가며 연산 횟수 차이를 직접 체감합니다.</h2>
+
+<div style="padding:.75rem 0 .5rem">
+
+<div class="sec">
+  <div class="sec-label">n (데이터 개수) 슬라이더로 직접 체감해보세요</div>
+  <div class="card">
+    <div class="slider-row">
+      <label>데이터 수 n</label>
+      <input type="range" min="2" max="1000" value="10" id="nSlider" step="1" oninput="update()">
+      <span class="val" id="nVal">10</span>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:.85rem">
+      <button onclick="setN(10)" style="font-size:12px">n = 10</button>
+      <button onclick="setN(100)" style="font-size:12px">n = 100</button>
+      <button onclick="setN(1000)" style="font-size:12px">n = 1,000</button>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat">
+        <div class="stat-n" id="sq-val">—</div>
+        <div class="stat-l"><span class="badge badge-b">O(n²)</span> 버블·선택 정렬</div>
+      </div>
+      <div class="stat">
+        <div class="stat-n" id="lg-val">—</div>
+        <div class="stat-l"><span class="badge badge-p">O(n log n)</span> 병합 정렬</div>
+      </div>
+    </div>
+
+    <div style="margin-top:.85rem">
+      <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:.45rem">상대적 연산 횟수 비교</div>
+
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+        <span style="font-size:11px;width:76px;color:#185FA5;font-weight:500">버블·선택</span>
+        <div style="flex:1;height:22px;background:var(--color-background-secondary);border-radius:4px;overflow:hidden">
+          <div id="bar-sq" style="height:100%;background:#378ADD;border-radius:4px;transition:width .35s;display:flex;align-items:center;padding:0 6px"><span id="bar-sq-txt" style="font-size:11px;color:#fff;white-space:nowrap;overflow:hidden"></span></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:11px;width:76px;color:#3C3489;font-weight:500">병합 정렬</span>
+        <div style="flex:1;height:22px;background:var(--color-background-secondary);border-radius:4px;overflow:hidden">
+          <div id="bar-lg" style="height:100%;background:#7F77DD;border-radius:4px;transition:width .35s;display:flex;align-items:center;padding:0 6px"><span id="bar-lg-txt" style="font-size:11px;color:#fff;white-space:nowrap;overflow:hidden"></span></div>
+        </div>
+      </div>
+
+      <div style="margin-top:.6rem;font-size:12px;color:var(--color-text-secondary)">
+        병합 정렬이 버블/선택 정렬보다 약 <strong id="ratio-txt" style="color:var(--color-text-primary)">—</strong> 빠릅니다
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row2 sec">
+  <div>
+    <div class="sec-label">O(n²) 이란?</div>
+    <div class="card" style="height:100%">
+      <div style="margin-bottom:.65rem"><span class="badge badge-b">버블 정렬 · 선택 정렬</span></div>
+      <div style="font-size:13px;color:var(--color-text-secondary);line-height:1.75;margin-bottom:.85rem">
+        데이터가 <strong style="color:var(--color-text-primary)">n개</strong>일 때<br>
+        비교 횟수 ≈ <strong style="color:#185FA5">n × n = n²</strong>번
+      </div>
+
+      <div class="step-card" style="border-color:#B5D4F4;background:#E6F1FB08">
+        <div style="font-size:11px;color:#185FA5;font-weight:500;margin-bottom:.25rem">왜 n²인가요?</div>
+        <div style="color:var(--color-text-secondary);font-size:12.5px">
+          바깥 반복문이 <strong style="color:var(--color-text-primary)">n번</strong> 돌고<br>
+          안쪽 반복문도 <strong style="color:var(--color-text-primary)">n번</strong> 돕니다.<br>
+          n × n = <strong style="color:#185FA5">n²</strong>
+        </div>
+      </div>
+
+      <div style="margin-top:.75rem;font-size:12.5px;color:var(--color-text-secondary);line-height:1.7">
+        n이 <strong style="color:var(--color-text-primary)">2배</strong>가 되면<br>
+        연산은 <strong style="color:#E24B4A">4배</strong> 늘어납니다.<br>
+        n이 <strong style="color:var(--color-text-primary)">10배</strong>가 되면<br>
+        연산은 <strong style="color:#E24B4A">100배</strong> 늘어납니다!
+      </div>
+
+      <div style="margin-top:.85rem;background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.65rem .85rem">
+        <div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:.3rem">코드 패턴</div>
+        <code style="font-size:11.5px;color:var(--color-text-primary);line-height:1.85;display:block">
+          for i in range(n):<br>
+          &nbsp;&nbsp;for j in range(n):<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#378ADD"># 이중 반복문 = O(n²)</span>
+        </code>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="sec-label">O(n log n) 이란?</div>
+    <div class="card" style="height:100%">
+      <div style="margin-bottom:.65rem"><span class="badge badge-p">병합 정렬</span></div>
+      <div style="font-size:13px;color:var(--color-text-secondary);line-height:1.75;margin-bottom:.85rem">
+        데이터가 <strong style="color:var(--color-text-primary)">n개</strong>일 때<br>
+        비교 횟수 ≈ <strong style="color:#3C3489">n × log₂n</strong>번
+      </div>
+
+      <div class="step-card" style="border-color:#AFA9EC;background:#EEEDFE08">
+        <div style="font-size:11px;color:#3C3489;font-weight:500;margin-bottom:.25rem">log₂n 이 뭔가요?</div>
+        <div style="color:var(--color-text-secondary);font-size:12.5px">
+          n을 2로 몇 번 나눠야 1이 되나요?<br>
+          <span style="color:#7F77DD">8 → 4 → 2 → 1</span> &nbsp;= <strong style="color:var(--color-text-primary)">3번</strong> (log₂8 = 3)<br>
+          <span style="color:#7F77DD">1024 → … → 1</span> = <strong style="color:var(--color-text-primary)">10번</strong>
+        </div>
+      </div>
+
+      <div style="margin-top:.75rem;font-size:12.5px;color:var(--color-text-secondary);line-height:1.7">
+        n이 <strong style="color:var(--color-text-primary)">2배</strong>가 되면<br>
+        연산은 <strong style="color:#1D9E75">2배 + 조금</strong>만 늘어납니다.<br>
+        n이 <strong style="color:var(--color-text-primary)">10배</strong>가 되면<br>
+        연산은 <strong style="color:#1D9E75">약 13배</strong>만 늘어납니다.
+      </div>
+
+      <div style="margin-top:.85rem;background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.65rem .85rem">
+        <div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:.3rem">병합 정렬 구조</div>
+        <code style="font-size:11.5px;color:var(--color-text-primary);line-height:1.85;display:block">
+          분할: log₂n 단계<br>
+          각 단계 병합: n번 비교<br>
+          <span style="color:#7F77DD"># n × log₂n = O(n log n)</span>
+        </code>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sec">
+  <div class="sec-label">실제 숫자로 비교 — n별 연산 횟수</div>
+  <div class="card" style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead>
+        <tr style="border-bottom:.5px solid var(--color-border-tertiary)">
+          <th style="text-align:left;padding:.5rem .75rem;font-weight:500;color:var(--color-text-secondary);font-size:12px">데이터 수 n</th>
+          <th style="text-align:right;padding:.5rem .75rem;font-weight:500;color:#185FA5;font-size:12px">O(n²) 버블·선택</th>
+          <th style="text-align:right;padding:.5rem .75rem;font-weight:500;color:#3C3489;font-size:12px">O(n log n) 병합</th>
+          <th style="text-align:right;padding:.5rem .75rem;font-weight:500;color:var(--color-text-secondary);font-size:12px">몇 배 차이?</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="sec">
+  <div class="sec-label">log₂n 직관적 이해 — "절반씩 나누기"</div>
+  <div class="card">
+    <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:.85rem;line-height:1.7">
+      병합 정렬은 배열을 <strong style="color:var(--color-text-primary)">계속 절반으로</strong> 쪼갭니다.<br>
+      몇 단계만에 원소 1개가 될까요? 그게 바로 <strong style="color:#3C3489">log₂n</strong>입니다.
+    </div>
+    <div id="divideViz" style="overflow-x:auto"></div>
+  </div>
+</div>
+
+<div class="sec">
+  <div class="sec-label">현실 비유로 이해하기</div>
+  <div class="analogy-grid">
+    <div class="analogy-item">
+      <div class="an-label">O(n²) — 버블·선택</div>
+      <div style="color:var(--color-text-secondary)">
+        반 친구 30명과 <strong style="color:var(--color-text-primary)">악수</strong>를 하는데<br>
+        모든 사람이 나머지 모든 사람과 악수해야 해요.<br>
+        <strong style="color:#E24B4A">30 × 29 ÷ 2 = 435번!</strong>
+      </div>
+    </div>
+    <div class="analogy-item">
+      <div class="an-label">O(n log n) — 병합 정렬</div>
+      <div style="color:var(--color-text-secondary)">
+        전화번호부에서 이름을 찾을 때<br>
+        <strong style="color:var(--color-text-primary)">계속 절반으로</strong> 펼쳐서 찾아요.<br>
+        <strong style="color:#1D9E75">1000명 → 10번만에 찾기!</strong>
+      </div>
+    </div>
+    <div class="analogy-item">
+      <div class="an-label">n이 커질수록</div>
+      <div style="color:var(--color-text-secondary)">
+        학생 수가 <strong style="color:var(--color-text-primary)">10배</strong>가 되면<br>
+        O(n²): <strong style="color:#E24B4A">100배 느려짐</strong><br>
+        O(n log n): <strong style="color:#1D9E75">약 13배만 느려짐</strong>
+      </div>
+    </div>
+    <div class="analogy-item">
+      <div class="an-label">실제 데이터 100만 개</div>
+      <div style="color:var(--color-text-secondary)">
+        O(n²): <strong style="color:#E24B4A">1조 번</strong> 연산<br>
+        O(n log n): <strong style="color:#1D9E75">약 2,000만 번</strong> 연산<br>
+        <strong style="color:var(--color-text-primary)">5만 배</strong> 차이!
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+function fmt(n){
+  if(n>=1e12) return (n/1e12).toFixed(1)+'조';
+  if(n>=1e8)  return (n/1e8).toFixed(1)+'억';
+  if(n>=1e4)  return (n/1e4).toFixed(1)+'만';
+  if(n>=1e3)  return (n/1e3).toFixed(1)+'천';
+  return Math.round(n).toLocaleString();
+}
+
+function calcSq(n){ return Math.round(n*(n-1)/2); }
+function calcLg(n){ return n>1?Math.round(n*Math.log2(n)):0; }
+
+function update(){
+  const n=parseInt(document.getElementById('nSlider').value);
+  document.getElementById('nVal').textContent=n.toLocaleString();
+  const sq=calcSq(n), lg=calcLg(n);
+  document.getElementById('sq-val').textContent=fmt(sq)+'회';
+  document.getElementById('lg-val').textContent=fmt(lg)+'회';
+  const mx=Math.max(sq,lg)||1;
+  const sqPct=Math.round(sq/mx*100), lgPct=Math.round(lg/mx*100);
+  document.getElementById('bar-sq').style.width=sqPct+'%';
+  document.getElementById('bar-sq-txt').textContent=fmt(sq);
+  document.getElementById('bar-lg').style.width=Math.max(lgPct,2)+'%';
+  document.getElementById('bar-lg-txt').textContent=fmt(lg);
+  const ratio=sq>0&&lg>0?(sq/lg):0;
+  document.getElementById('ratio-txt').textContent=ratio>=2?'약 '+Math.round(ratio)+'배':'거의 비슷';
+  updateDivide(n);
+}
+
+function setN(v){
+  document.getElementById('nSlider').value=v;
+  update();
+}
+
+// 테이블
+const TABLE_NS=[5,10,50,100,1000,10000,100000];
+function buildTable(){
+  const rows=TABLE_NS.map(n=>{
+    const sq=calcSq(n),lg=calcLg(n);
+    const ratio=lg>0?Math.round(sq/lg):'-';
+    const isHighlight=n>=1000;
+    return `<tr style="border-bottom:.5px solid var(--color-border-tertiary);${isHighlight?'background:var(--color-background-secondary)':''}">
+      <td style="padding:.5rem .75rem;font-weight:500">${n.toLocaleString()}</td>
+      <td style="text-align:right;padding:.5rem .75rem;color:#185FA5">${fmt(sq)}</td>
+      <td style="text-align:right;padding:.5rem .75rem;color:#3C3489">${fmt(lg)}</td>
+      <td style="text-align:right;padding:.5rem .75rem;color:${isHighlight?'#A32D2D':'var(--color-text-secondary)'};font-weight:${isHighlight?'500':'400'}">${ratio.toLocaleString()}배</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('tableBody').innerHTML=rows;
+}
+
+// 분할 시각화
+function updateDivide(n){
+  const steps=[];
+  let cur=n;
+  while(cur>1){steps.push(cur);cur=Math.floor(cur/2);}
+  steps.push(1);
+  const maxSteps=Math.min(steps.length,9);
+  const disp=steps.slice(0,maxSteps);
+
+  let h='<div style="display:flex;align-items:center;gap:4px;flex-wrap:nowrap;overflow-x:auto;padding:.25rem 0">';
+  disp.forEach((s,i)=>{
+    const pct=Math.min(Math.round(s/n*100),100);
+    const w=Math.max(pct*.6+16,28);
+    h+=`<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0">
+      <div style="width:${w}px;height:28px;background:${i===disp.length-1?'#0F6E56':'#7F77DD'};border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:${s>=100?10:12}px;font-weight:500;color:#fff">${s.toLocaleString()}</div>
+      <div style="font-size:9px;color:var(--color-text-tertiary)">${i}단계</div>
+    </div>`;
+    if(i<disp.length-1){
+      h+=`<div style="font-size:12px;color:var(--color-text-tertiary);flex-shrink:0">÷2</div>`;
+    }
+  });
+  if(steps.length>maxSteps){
+    h+=`<div style="font-size:12px;color:var(--color-text-tertiary);flex-shrink:0">…</div>`;
+  }
+  h+=`</div>`;
+  h+=`<div style="margin-top:.6rem;font-size:12.5px;color:var(--color-text-secondary)">n = ${n.toLocaleString()}을 1이 될 때까지 절반으로 나누면 <strong style="color:#3C3489">${steps.length-1}단계</strong> (= log₂${n.toLocaleString()} ≈ ${(Math.log2(n)).toFixed(1)})</div>`;
+  document.getElementById('divideViz').innerHTML=h;
+}
+
+buildTable();
+update();
+</script>
